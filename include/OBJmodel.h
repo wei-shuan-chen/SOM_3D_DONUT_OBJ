@@ -23,14 +23,19 @@ public:
     std::vector<glm::ivec4> normal_index;
     std::vector<glm::ivec4> texcor_index;
     std::vector<Vertex> m_MeshTri;
-    int pointNum = 0;
-    int triNum = 0;
     glm::fvec3 m_MaxPos;
     glm::fvec3 m_MinPos;
+    int extraPoint[4]; // top bottom left right
+    int pointNum = 0;
+    int triNum = 0;
     bool Isline = true;
 
 private:
-
+    glm::fvec3 leftPos;
+    glm::fvec3 rightPos;
+    glm::fvec3 topPos;
+    glm::fvec3 bottomPos;
+    void findExtraPos(glm::fvec3 vertex);
     void putVertex();
 };
 

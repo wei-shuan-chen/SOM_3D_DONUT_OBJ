@@ -6,7 +6,7 @@
 
 #include "Vertex.h"
 
-void SOM_Create(std::vector<glm::fvec3> vertex_tri, int pointNum, glm::fvec3 m_MaxPos, glm::fvec3 m_MinPos);
+void SOM_Create(std::vector<glm::fvec3> vertex_tri, int pointNum, glm::fvec3 m_MaxPos, glm::fvec3 m_MinPos, int *extraPoint);
 void SOM_IterateOnce();
 void SOM_Destroy();
 

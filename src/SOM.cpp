@@ -7,14 +7,14 @@
 glm::fvec3 **lattice;
 glm::fvec3 *dataset;
 
+glm::ivec2 latticeEtraPoint[4];
+
 int go = 0;
 bool tmp = true;
 bool is_som_finished = false;
 const int map_width = 61;
 const int map_height = 61;
-const float R = 1.0;
-const float r = 0.2;
-int datasteNum = 0;
+int datasetNum = 0;
 const int max_iter = 20000;
 int iter = 0;
 double learning_rate = 0.1;
@@ -26,25 +26,30 @@ double neighbor = 30;
 glm::fvec3 **createMap(int map_width, int map_height, glm::fvec3 m_MaxPos, glm::fvec3 m_MinPos);
 glm::fvec3 *createInputDataset(std::vector<glm::fvec3> vertex_tri, int pointNum);
 glm::ivec2 computNeiborhood(int i,int j,glm::ivec2 node,glm::ivec2 bmu);
-const glm::fvec3 getInput(glm::fvec3 *dataset, int datasteNum);
+const glm::fvec3 getInput(glm::fvec3 *dataset, int datasetNum);
 void destroy(glm::fvec3 **arr, int width, int height);
-void destroyDataset(glm::fvec3 *arr, int datasteNum);
+void destroyDataset(glm::fvec3 *arr, int datasetNum);
 void updateNode(glm::fvec3** lattice, glm::fvec3 nowInput,glm::ivec2 bmuId, glm::ivec2 nodeId, double radius, double learning_rate);
 double computerate(int iter, double fun);
 double computeradius(int iter, double fun);
 double computeScale(double sigma, double dist);
 bool isInNeighborhood(double squaredDist, double radius);
+void findEtrapoint(double i0, double j0, double k0, int i, int j, glm::fvec3 *leftPos, glm::fvec3 *rightPos, glm::fvec3 *topPos, glm::fvec3 *bottomPos);
+void fixExtraPoint(int *extraPoint);
 
-void SOM_Create(std::vector<glm::fvec3> vertex_tri, int pointNum, glm::fvec3 m_MaxPos, glm::fvec3 m_MinPos)
+void SOM_Create(std::vector<glm::fvec3> vertex_tri, int pointNum, glm::fvec3 m_MaxPos, glm::fvec3 m_MinPos, int *extraPoint)
 {
     srand(time(NULL));
 
     // 1. Create lattice
+    // 1. find lattice exrtapoint
     lattice = createMap(map_width, map_height, m_MaxPos, m_MinPos);
     // 2. Create input dataset
     dataset = createInputDataset(vertex_tri, pointNum);
+    // 3. fix etrapoint
+    fixExtraPoint(extraPoint);
 
-    datasteNum = pointNum;
+    datasetNum = pointNum;
 }
 
 void SOM_IterateOnce()
@@ -55,10 +60,11 @@ void SOM_IterateOnce()
     n_learning_rate = computerate(iter, learning_rate);
     neighbor = computeradius(iter, radius);
 
-    const glm::fvec3 nowInput = getInput(dataset, datasteNum);
+    glm::ivec2 bmu = {0, 0};
+    const glm::fvec3 nowInput = getInput(dataset, datasetNum);
     double minDist = -1.0;
-    glm::ivec2 bmu;
     // compute winner point
+    
     for (int i = 0; i < map_width; i++)
     {
         for (int j = 0; j < map_height; j++)
@@ -72,22 +78,19 @@ void SOM_IterateOnce()
             if (minDist < 0.0)
             {
                 minDist = tmp;
-                bmu.x = 0;
-                bmu.y = 0;
+                continue;
             }
-            else
+            
+            if (minDist > tmp)
             {
-                if (minDist > tmp)
-                {
-                    minDist = tmp;
-                    bmu.x = i;
-                    bmu.y = j;
-                }
+                minDist = tmp;
+                bmu = {i, j};
             }
+            
         }
     }
+    
     // renew winner point and neighnorhood
-
     for (int i = 0; i < map_width; i++)
     {
         for (int j = 0; j < map_height; j++)
@@ -97,7 +100,13 @@ void SOM_IterateOnce()
             double squaredDist = static_cast<double>(diff.x * diff.x + diff.y * diff.y);
             // std::cout << "Dist " <<squaredDist<<std::endl;
             // std::cout << i<<", " << j << std::endl;
-            if (isInNeighborhood(squaredDist, neighbor))
+            double no_extra = true;
+            for(int k = 0; k < 4; k++){
+                if(i == latticeEtraPoint[k].x && j == latticeEtraPoint[k].y){
+                    no_extra = false;
+                }
+            }
+            if (isInNeighborhood(squaredDist, neighbor) && no_extra)
             {
                 double n_radius = computeScale(neighbor, squaredDist);
                 updateNode(lattice, nowInput, bmu, node, n_radius, n_learning_rate);
@@ -114,7 +123,7 @@ void SOM_Destroy()
     // 1. Destroy lattice
     destroy(lattice, map_width, map_height);
     // 2. Destroy input dataset
-    destroyDataset(dataset, datasteNum);
+    destroyDataset(dataset, datasetNum);
 }
 
 glm::fvec3 *createInputDataset(std::vector<glm::fvec3> vertex_tri, int pointNum)
@@ -137,10 +146,16 @@ glm::fvec3 **createMap(int map_width, int map_height, glm::fvec3 m_MaxPos, glm::
 
     glm::fvec3 **lattice = (glm::fvec3 **)malloc(sizeof(glm::fvec3 *) * map_width);
     for (int i = 0; i < map_width; i++)
-    {
         lattice[i] = (glm::fvec3 *)malloc(sizeof(glm::fvec3) * map_height);
-    }
 
+
+    glm::fvec3 leftPos;
+    glm::fvec3 rightPos;
+    glm::fvec3 topPos;
+    glm::fvec3 bottomPos;
+
+    float R = ((m_MaxPos.x - m_MinPos.x) + (m_MaxPos.y - m_MinPos.y)) / 4;
+    float r = R / 5.0;
     double rad = 360.0/(double)(map_width-1);
     for (int i = 0; i < map_width; i++)
     {
@@ -152,21 +167,58 @@ glm::fvec3 **createMap(int map_width, int map_height, glm::fvec3 m_MaxPos, glm::
             double i0 =  cos(fi)* ( R + r*sin(theta));
             double j0 = sin(fi)* ( R + r*sin(theta));
             double k0 = r * cos(theta)-0.2;
-            // std::cout << i0 << ", " << j0<< ", "<< k0<<std::endl;
+            // 1. find lattice exrtapoint
+            findEtrapoint(i0,j0,k0,i,j,&leftPos,&rightPos,&topPos,&bottomPos);
+
             lattice[i][j] = {i0, j0, k0};
         }
     }
     return lattice;
 }
-void destroy(glm::fvec3 **arr, int width, int height)
-{
-    for (int i = 0; i < width; i++)
-    {
-        free(arr[i]);
+void fixExtraPoint(int *extraPoint){
+ 
+    for(int i = 0; i < 4; i++){
+        int i0 = latticeEtraPoint[i].x;
+        int j0 = latticeEtraPoint[i].y;
+        int i1 = extraPoint[i];
+        std::cout << i0<<", "<<j0<<" : {"<< lattice[i0][j0].x <<","<<lattice[i0][j0].y<<","<<lattice[i0][j0].z<<"}"<<std::endl;
+        std::cout << i1<<" : {"<< dataset[i1].x <<","<<dataset[i1].y<<","<<dataset[i1].z<<"}\n"<<std::endl;
+        
+        lattice[i0][j0] = dataset[i1];
     }
+
 }
-void destroyDataset(glm::fvec3 *arr, int datasteNum){
+void destroy(glm::fvec3 **arr, int width, int height){
+    for (int i = 0; i < width; i++)
+        free(arr[i]);
+}
+void destroyDataset(glm::fvec3 *arr, int datasetNum){
     free(arr);
+}
+
+void findEtrapoint(double i0, double j0, double k0, int i, int j, glm::fvec3 *leftPos, glm::fvec3 *rightPos, glm::fvec3 *topPos, glm::fvec3 *bottomPos){
+    if(i == 0 && j == 0){
+        *leftPos = *rightPos = *topPos = *bottomPos = {i0,j0,k0};
+        latticeEtraPoint[0] = latticeEtraPoint[1] = latticeEtraPoint[2] = latticeEtraPoint[3] = {i,j};
+        return;
+    }
+    if((*topPos).y < j0){
+        *topPos = {i0,j0,k0};
+        latticeEtraPoint[0] = {i,j};
+    }
+    if((*bottomPos).y > j0){
+        *bottomPos = {i0,j0,k0};
+        latticeEtraPoint[1] = {i,j};
+    }
+    if((*leftPos).x > i0){
+        *leftPos = {i0,j0,k0};
+        latticeEtraPoint[2] = {i,j};
+    }
+    if((*rightPos).x < i0){
+        *rightPos = {i0,j0,k0};
+        latticeEtraPoint[3] = {i,j};
+    }
+
 }
 glm::ivec2 computNeiborhood(int i, int j, glm::ivec2 node, glm::ivec2 bmu){
     
@@ -216,20 +268,10 @@ double computerate(int iter, double fun)
     return sigma;
 }
 
-const glm::fvec3 getInput(glm::fvec3 *dataset, int datasteNum)
+const glm::fvec3 getInput(glm::fvec3 *dataset, int datasetNum)
 {
-    int i = rand() % datasteNum;
-    // int vary = 0;
-    // while(dataset[i].x > R+vary || dataset[i].x < (-1)*R-vary){
-    //     i = rand() % datasteNum;
-    //     if(iter > 5000 && vary == 0){
-    //         vary=1;
-    //     }
-    //     if(iter > 10000 && vary == 1){
-    //         vary = 5;
-    //     }
-        
-    // }
+    int i = rand() % datasetNum;
+
     return dataset[i];
 }
 

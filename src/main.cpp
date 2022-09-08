@@ -86,10 +86,8 @@ int main()
 	Shader ourShader("shader/vShader.vs", "shader/fShader.fs");	
 
 	OBJmodel inputData;
-	OBJmodel inputData2;
 	inputData.LoadOBJfile("obj/tea.obj");
-	inputData2.LoadOBJfile("obj/tea.obj");
-	SOM_Create(inputData.vertex_tri, inputData.pointNum, inputData.m_MaxPos, inputData.m_MinPos);
+	SOM_Create(inputData.vertex_tri, inputData.pointNum, inputData.m_MaxPos, inputData.m_MinPos, inputData.extraPoint);
 	create_world();
 	Item inputdata(inputData.m_MeshTri);
 	Item lattice_square_four_edges(world.lattice_square_four_edges);
@@ -142,12 +140,8 @@ int main()
         ourShader.setVec3("color", glm::vec3(1.0,0.0,0.0));
         glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
         glBindVertexArray(lattice_square_four_edges.VAO);
-		// if(inputData2.Isline)
-        	glDrawArrays(GL_LINES, 0, world.lattice_square_four_edges.size());
-		// else
-		// 	glDrawArrays(GL_TRIANGLES, 0, world.lattice_square_four_edges.size());
+        glDrawArrays(GL_LINES, 0, world.lattice_square_four_edges.size());
 
-		// input dataset(obj model) 
 		if(show){
 
 			ourShader.setVec3("color", 1.0f, 1.0f, 0.0f);

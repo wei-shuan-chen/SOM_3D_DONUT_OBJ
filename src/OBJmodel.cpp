@@ -73,27 +73,7 @@ bool OBJmodel::LoadOBJfile(const char *objFileName)
             // std::cout << vertex.x << ", " << vertex.y << ", "<< vertex.z<< std::endl;
             vertex_tri.push_back(vertex);
 
-            if (pointNum == 0)
-            {
-                m_MaxPos.x = m_MinPos.x = vertex.x;
-                m_MaxPos.y = m_MinPos.y = vertex.y;
-                m_MaxPos.z = m_MinPos.z = vertex.z;
-            }
-            // maximum
-            if (m_MaxPos.x < vertex.x)
-                m_MaxPos.x = vertex.x;
-            if (m_MaxPos.y < vertex.y)
-                m_MaxPos.y = vertex.y;
-            if (m_MaxPos.z < vertex.z)
-                m_MaxPos.z = vertex.z;
-
-            // minmum
-            if (m_MinPos.x > vertex.x)
-                m_MinPos.x = vertex.x;
-            if (m_MinPos.y > vertex.y)
-                m_MinPos.y = vertex.y;
-            if (m_MinPos.z > vertex.z)
-                m_MinPos.z = vertex.z;
+            findExtraPos(vertex);
             pointNum++;
         }
         else if (strcmp(type, "vt") == 0)
@@ -174,6 +154,48 @@ bool OBJmodel::LoadOBJfile(const char *objFileName)
     std::cout << "min : " << m_MinPos.x << ", " << m_MinPos.y << ", " << m_MinPos.z << std::endl;
     putVertex();
     return true;
+}
+void OBJmodel::findExtraPos(glm::fvec3 vertex){
+    if (pointNum == 0)
+    {
+        m_MaxPos = m_MinPos = leftPos = rightPos = topPos = bottomPos = vertex;
+        extraPoint[0] = extraPoint[1] = extraPoint[2] = extraPoint[3] = 0;
+        return;
+    }
+    // maximum
+    if (m_MaxPos.x < vertex.x){
+        m_MaxPos.x = vertex.x;
+        // right
+        rightPos = vertex;
+        extraPoint[3] = pointNum;
+    }
+    if (m_MaxPos.y < vertex.y){
+        m_MaxPos.y = vertex.y;
+        // top
+        topPos = vertex;
+        extraPoint[0] = pointNum;
+    }
+    if (m_MaxPos.z < vertex.z)
+        m_MaxPos.z = vertex.z;
+
+    // minmum
+    if (m_MinPos.x > vertex.x){
+        m_MinPos.x = vertex.x;
+        // left
+        leftPos = vertex;
+        extraPoint[2] = pointNum;
+    }
+    if (m_MinPos.y > vertex.y){
+        m_MinPos.y = vertex.y;
+        // bottom
+        bottomPos = vertex;
+        extraPoint[1] = pointNum;
+    }
+    if (m_MinPos.z > vertex.z)
+        m_MinPos.z = vertex.z;
+
+
+    
 }
 void OBJmodel::putVertex(){
     if (vertex_index[0].w == 0)
