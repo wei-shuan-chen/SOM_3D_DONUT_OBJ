@@ -9,6 +9,8 @@
 #include <imgui_impl_glfw.h>
 #include <imgui_impl_opengl3.h>
 
+#include <thread>
+
 #include "shader.h"
 #include "matrixStack.h"
 #include "item.h"
@@ -23,8 +25,14 @@
 
 #define TSIZE 64
 
+using namespace std;
+
+
 void framebuffer_size_callback(GLFWwindow *window, int width, int height);
+void keyPressFun(GLFWwindow* window, int key, int scancode, int action, int mods);
 void processInput(GLFWwindow *window);
+void runthreadSomIter();
+void createThread();
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -35,6 +43,9 @@ const unsigned int SCR_HEIGHT = 600;
 bool show = true;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+// thread t1 = thread(runthreadSomIter);
+thread t1;
+
 int main()
 {
 	// glfw: initialize and configure
@@ -59,6 +70,7 @@ int main()
 	}
 	glfwMakeContextCurrent(window);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+	glfwSetKeyCallback(window, keyPressFun);
 	// glad: load all OpenGL function pointers
 	// ---------------------------------------
 	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
@@ -92,10 +104,9 @@ int main()
 	Item inputdata(inputData.m_MeshTri);
 	Item lattice_square_four_edges(world.lattice_square_four_edges);
 	glEnable(GL_DEPTH_TEST);
-
+	
 	while (!glfwWindowShouldClose(window))
 	{
-
 		ImGui_ImplOpenGL3_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -105,6 +116,7 @@ int main()
         ImGui::Text("learning_rate, %f", n_learning_rate);
         if(ImGui::Button("Start")) {
             go = 1;
+			createThread();
         }
         if(ImGui::Button("Stop")) {
             tmp = !tmp;
@@ -132,7 +144,8 @@ int main()
         ourShader.setMat4("projection", projection.Top());
         ourShader.setMat4("model", model.Top());
 		if(!is_som_finished && go == 1 && tmp == true) {
-            SOM_IterateOnce();
+			
+            // SOM_IterateOnce();
 			renew_world();
             lattice_square_four_edges.renewVBO(world.lattice_square_four_edges);
         }
@@ -159,29 +172,30 @@ int main()
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
-
+	t1.join();
 	glfwTerminate();
 	destroy_world();
 	SOM_Destroy();
 	return 0;
 }
-
-// move ball collision
-
+void runthreadSomIter(){
+	while(iter < max_iter){
+		SOM_IterateOnce();			
+	}
+}
+void createThread(){
+	if (t1.joinable()) {
+		t1.join();
+	}
+	t1 = thread(runthreadSomIter);
+}
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
 	if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		glfwSetWindowShouldClose(window, true);
-	
-	if(glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
-		go = 1;
-	if(glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-		tmp = !tmp;
-	if(glfwGetKey(window, GLFW_KEY_B) == GLFW_PRESS)
-		show = !show;
-	
+
 	if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
 		camera.ProcessKeyboard(FORWARD, deltaTime);
 	if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
@@ -203,7 +217,18 @@ void processInput(GLFWwindow *window)
 	if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
 		camera.ProcessKeyboard(YAWDOWN, deltaTime);
 }
-
+void keyPressFun(GLFWwindow* window, int key, int scancode, int action, int mods){
+	if(key == GLFW_KEY_B && action == GLFW_PRESS)
+		show = !show;
+	if(key == GLFW_KEY_T && action == GLFW_PRESS)
+		tmp = !tmp;
+	
+	if(key == GLFW_KEY_G && action == GLFW_PRESS){
+		go = 1;
+		createThread();
+	}	
+	
+}
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
 // ---------------------------------------------------------------------------------------------
 void framebuffer_size_callback(GLFWwindow *window, int width, int height)

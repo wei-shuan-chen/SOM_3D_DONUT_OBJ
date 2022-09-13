@@ -64,7 +64,8 @@
         "codecvt": "cpp",
         "map": "cpp",
         "regex": "cpp",
-        "ratio": "cpp"
+        "ratio": "cpp",
+        "thread": "cpp"
     },
     "cmake.configureOnOpen": false
 }
