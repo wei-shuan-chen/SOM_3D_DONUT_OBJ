@@ -92,13 +92,13 @@ public:
             Position -= Up * velocity;
 
         if (direction == PITCHUP)
-            Pitch += 1.0f;
+            Pitch += 0.1f;
         if (direction == PITCHDOWN)
-            Pitch -= 1.0f;
+            Pitch -= 0.1f;
         if (direction == YAWUP)
-            Yaw += 1.0f;
+            Yaw += 0.1f;
         if (direction == YAWDOWN)
-            Yaw -= 1.0f;
+            Yaw -= 0.1f;
         
         if (Pitch > 89.0f)
             Pitch = 89.0f;

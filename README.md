@@ -1,4 +1,4 @@
-# Self-Organizing Map 3D Demo (OBJ)(donut)
+# Self-Organizing Map 3D Demo (OBJ)(donut)(thread)
 
 ###### 第一次寫obj檔~~ ######
 
@@ -58,13 +58,17 @@
 | K    | 鏡頭向下旋轉  |
 | I    | 鏡頭向上旋轉  |
 
-
+ ![](./image/start.png)
 
 ### 開始執行
 
-
+ ![](./image/mid.png)
 
 ### 結果
+ ![](./image/end0.png)
+ ![](./image/end1.png)
 
-
-
+### 進階
+運用thread
+讓SOM的迭代不受螢幕幀率的影響
+ ![](./image/code.png)
