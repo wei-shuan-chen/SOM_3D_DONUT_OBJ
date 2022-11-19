@@ -71,4 +71,5 @@
 ### 進階
 運用thread
 讓SOM的迭代不受螢幕幀率的影響
+
  ![](./image/code.png)
