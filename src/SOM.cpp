@@ -50,6 +50,7 @@ void SOM_Create(std::vector<glm::fvec3> vertex_tri, int pointNum, glm::fvec3 m_M
     fixExtraPoint(extraPoint);
 
     datasetNum = pointNum;
+    std::cout << pointNum << std::endl;
 }
 
 void SOM_IterateOnce()
@@ -69,21 +70,21 @@ void SOM_IterateOnce()
     {
         for (int j = 0; j < map_height; j++)
         {
-            double tmp = 0.0;
+            double tmp1 = 0.0;
             float dx = (lattice[i][j].x - nowInput.x);
             float dy = (lattice[i][j].y - nowInput.y);
             float dz = (lattice[i][j].z - nowInput.z);
-            tmp = dx*dx + dy*dy+ dz*dz;
+            tmp1 = dx*dx + dy*dy+ dz*dz;
 
             if (minDist < 0.0)
             {
-                minDist = tmp;
+                minDist = tmp1;
                 continue;
             }
             
-            if (minDist > tmp)
+            if (minDist > tmp1)
             {
-                minDist = tmp;
+                minDist = tmp1;
                 bmu = {i, j};
             }
             
@@ -147,7 +148,6 @@ glm::fvec3 **createMap(int map_width, int map_height, glm::fvec3 m_MaxPos, glm::
     glm::fvec3 **lattice = (glm::fvec3 **)malloc(sizeof(glm::fvec3 *) * map_width);
     for (int i = 0; i < map_width; i++)
         lattice[i] = (glm::fvec3 *)malloc(sizeof(glm::fvec3) * map_height);
-
 
     glm::fvec3 leftPos;
     glm::fvec3 rightPos;
@@ -241,7 +241,7 @@ glm::ivec2 computNeiborhood(int i, int j, glm::ivec2 node, glm::ivec2 bmu){
     half = (map_height-1)/2;
     if(bmu.y <= half){
         if(node.y >= half+bmu.y){
-            diff.y = bmu.y+((map_width-1) - node.y); 
+            diff.y = bmu.y+((map_height-1) - node.y); 
         }else{
             diff.y = node.y - bmu.y;
         }
@@ -249,7 +249,7 @@ glm::ivec2 computNeiborhood(int i, int j, glm::ivec2 node, glm::ivec2 bmu){
         if(node.y >= bmu.y - half){
             diff.y = bmu.y - node.y;
         }else{
-            diff.y = node.y + ((map_width-1) - bmu.y);
+            diff.y = node.y + ((map_height-1) - bmu.y);
         }
     }
     
@@ -271,7 +271,7 @@ double computerate(int iter, double fun)
 const glm::fvec3 getInput(glm::fvec3 *dataset, int datasetNum)
 {
     int i = rand() % datasetNum;
-
+// std:: cout <<i << std::endl;
     return dataset[i];
 }
 
